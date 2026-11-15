@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsui-clyne"
+version = "0.0.0"
+description = "tsui-clyne"
+readme = "README.md"
+maintainers = [{name = "Alessandro Tognan", email="alessandro.tognan@uniud.it"}]
+dependencies=["numpy",
+              "h5py",]
+requires-python = ">=3.10"
+license = "GPL-3.0"
+
+[project.urls]
+Homepage = "https://github.com/aletgn/tsui-clyne"
+Repository = "https://github.com/aletgn/tsui-clyne"
+Documentation = "https://github.com/aletgn/tsui-clyne#readme"
+
+[project.optional-dependencies]
+test = ["notebook"]
+dev = ["pytest", "twine", "setuptools", "build"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
