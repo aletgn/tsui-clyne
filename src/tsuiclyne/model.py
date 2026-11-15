@@ -157,7 +157,6 @@ class TsuiClaynePlane:
             print(f"Provided step size (w): {w}")
             self.w = w
             self.n = np.ceil(deposit.h / self.w)
-            print(deposit.h)
         else:
             print(f"Provided layers(n): {n}")
             self.n = n
@@ -257,14 +256,14 @@ class TsuiClaynePlane:
                                                        self.F, self.delta, self.k_diff)
         self.ssb_dep = self.ssb_dep_hist.sum()
         self.sst_dep = self.sst_dep_hist.sum()
-        print(f"Stress in substrate. Bottom: {self.ssb_dep}, Interface: {self.ssb_dep}.")
+        print(f"Stress in substrate. Bottom: {self.ssb_dep:.5f}, Interface: {self.sst_dep:.5f}.")
 
         self.sd_layer = stress_layer(self.steps, self.b, self.w, self.deposit.E_eff,
                                      self.F, self.delta, self.k_diff)
         self.sd_dep = stress_deposit_layer(self.steps, self.steps, self.b,
                                            self.substrate.h, self.substrate.E_eff,
                                            self.w, self.deposit.E_eff, self.F, self.delta, self.k_diff)
-        print(f"Stress in deposit (edges). Interface: {self.sd_dep[0]}, Top: {self.sd_dep[-1]}.")
+        print(f"Stress in deposit (edges). Interface: {self.sd_dep[0]:.5f}, Top: {self.sd_dep[-1]:.5f}.")
 
 
     def cooling(self, delta_T: float | None = None, delta_eps: float | None = None) -> None:
@@ -323,12 +322,12 @@ class TsuiClaynePlane:
                                                  self.th_F, self.th_delta, self.th_k_diff) * self.th_scale
         self.sst_th = th_stress_substrate_interface(self.b, self.substrate.h, self.substrate.E_eff,
                                                     self.th_F, self.th_delta, self.th_k_diff) * self.th_scale
-        print(f"Thermal stress in substrate. Bottom: {self.ssb_th}, Interface: {self.sst_th}.")
+        print(f"Thermal stress in substrate. Bottom: {self.ssb_th:.5f}, Interface: {self.sst_th:.5f}.")
 
         self.sd_th = th_stress_layer(self.steps, self.b, self.w,
                                      self.deposit.h, self.deposit.E_eff,
                                      self.th_F, self.th_delta, self.th_k_diff) * self.th_scale
-        print(f"Thermal stress in deposit (edges). Interface: {self.sd_th[0]}, Top: {self.sd_th[-1]}.")
+        print(f"Thermal stress in deposit (edges). Interface: {self.sd_th[0]:.5f}, Top: {self.sd_th[-1]:.5f}.")
 
 
     def sum_stress_after_cooling(self) -> None:

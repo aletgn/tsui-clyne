@@ -26,11 +26,24 @@ Object oriented Python implementation of the Tsui-Clyne analytical model for res
 | $\Delta\varepsilon$ | Thermal misfit strain, $(\alpha_s-\alpha_d)\,\Delta T$ |
 |Effective moduli | $E_{\text{eff}} = \frac{E}{1-\nu}$
 
-## Usage
+## Basic Usage
 
 ```python
-from tc import TsuiClyne   # adapt to your module layout
+from sys import path as syspath
+from os import path as ospath
+syspath.append(ospath.join(ospath.expanduser("~"), 'path_to_folder_package'))
 
-tc = TsuiClyne(...)        # materials, geometry, sigma_q, delta_eps
-tc.deposition()            # quench build-up, substrate and deposit stresses
+from tsuiclyne.model import TsuiClaynePlane as TCP
+
+substrate = Material("Sub", b_sub, H, E_sub, n_sub, alpha_sub)
+deposit = Material("Dep"  , b_dep, h, E_dep, n_dep, alpha_dep)
+# alpha_* is optional. Required for cooling only.
+
+# Cooling and removal depend on individual case.
+tc = TCP(substrate, deposit, quench_stress, w_step, n_layer, "Sub-Dep")
+tc.deposition()
+tc.cooling(delta_eps) # If delta_eps not provided, must choose delta T and alpha.
+tc.removal()
+
+# Export to .h5 if needed.
 ```
