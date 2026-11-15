@@ -24,10 +24,7 @@ Object oriented Python implementation of the Tsui-Clyne analytical model for res
 | $\sigma_q$ | Quench stress |
 | $b$ | Width (stresses do not depend on it for a uniform section) |
 | $\Delta\varepsilon$ | Thermal misfit strain, $(\alpha_s-\alpha_d)\,\Delta T$ |
-Effective moduli for the biaxial stress state is computed as follows:
-$$
-E_{\text{eff}} = \frac{E}{1-\nu}
-$$
+|Effective moduli | $E_{\text{eff}} = \frac{E}{1-\nu}$
 
 ## Usage
 
