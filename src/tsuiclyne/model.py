@@ -15,14 +15,14 @@ from tsuiclyne.util import line, dict_to_h5
 
 class TsuiClaynePlane:
     """Model the stress evolution in a substrate-deposit system.
-        
+
     Simulates the mechanical and thermal stress distributions during
     deposition, cooling and substrate removal, following the Tsui-Clayne
     analytical approach."""
 
     def __init__(self, substrate: Material, deposit: Material, sigma_q: float, w: float=None, n: int=None, name: str="Untitled") -> None:
         """Initialise the substrate-deposit model.
-        
+
             Parameters
             ----------
             substrate : Material
@@ -37,7 +37,7 @@ class TsuiClaynePlane:
                 Number of deposition layers. Must be provided if ``w`` is not specified.
             name : str, optional
                 Model name, by default ``"Untitled"``.
-        
+
             Attributes
             ----------
             name : str
@@ -58,7 +58,7 @@ class TsuiClaynePlane:
                 Deposition step indices.
             midpoints : np.ndarray
                 Vertical coordinates of deposit layer midpoints.
-        
+
             F : np.ndarray or None
                 Deposition force at each step.
             delta_0 : float or None
@@ -71,7 +71,7 @@ class TsuiClaynePlane:
                 Composite bending stiffness at each deposition step.
             k_diff : np.ndarray or None
                 Curvature increments during deposition.
-        
+
             ssb_dep_hist : np.ndarray
                 Substrate bottom stress contributions from each deposition step.
             ssb_dep : float
@@ -86,7 +86,7 @@ class TsuiClaynePlane:
                 Total deposit stress distribution after deposition.
             done_deposition : bool
                 Whether deposition calculations have been completed.
-        
+
             th_scale : float
                 Scaling factor for thermal stresses, used to convert to MPa.
             delta_eps : float or None
@@ -107,7 +107,7 @@ class TsuiClaynePlane:
                 Thermal stress distribution in the deposit.
             done_cooling : bool
                 Whether cooling calculations have been completed.
-        
+
             slope : float or None
                 Slope of the linear substrate stress distribution.
             intercept : float or None
@@ -130,7 +130,7 @@ class TsuiClaynePlane:
                 Moment equilibrium residual.
             done_removal : bool
                 Whether removal calculations have been completed.
-        
+
             ssb : float
                 Total substrate bottom stress after cooling.
             sst : float
@@ -172,12 +172,12 @@ class TsuiClaynePlane:
         self.delta_prev = None
         self.sigma = None
         self.k_diff = None
-        self.ssb_dep_hist = np.zeros_like(self.steps)
+        self.ssb_dep_hist = np.zeros_like(self.steps, dtype=float)
         self.ssb_dep = 0.
-        self.sst_dep_hist = np.zeros_like(self.steps)
+        self.sst_dep_hist = np.zeros_like(self.steps, dtype=float)
         self.sst_dep = 0.
-        self.sd_layer = np.zeros_like(self.steps)
-        self.sd_dep = np.zeros_like(self.steps)
+        self.sd_layer = np.zeros_like(self.steps, dtype=float)
+        self.sd_dep = np.zeros_like(self.steps, dtype=float)
         self.done_deposition = False
 
         # cooling
@@ -187,9 +187,9 @@ class TsuiClaynePlane:
         self.th_k_diff = None
         self.th_sigma = None
         self.th_F = None
-        self.ssb_th = np.zeros_like(self.steps)
-        self.sst_th = np.zeros_like(self.steps)
-        self.sd_th = np.zeros_like(self.steps)
+        self.ssb_th = np.zeros_like(self.steps, dtype=float)
+        self.sst_th = np.zeros_like(self.steps, dtype=float)
+        self.sd_th = np.zeros_like(self.steps, dtype=float)
         self.done_cooling = False
 
         # removal
@@ -203,15 +203,23 @@ class TsuiClaynePlane:
         self.M_chk = None
         self.F_res = None
         self.M_res = None
+        self.sd_rem = np.zeros_like(self.steps, dtype=float)
         self.done_removal = False
 
         # total after cooling
         self.ssb = 0.
         self.sst = 0.
-        self.sd = np.zeros_like(self.steps)
+        self.sd = np.zeros_like(self.steps, dtype=float)
 
-        # total after removal (optional)
-        self.sd_rem = np.zeros_like(self.steps)
+
+    def _update_total_stress(self, sb: float, st: float, sd: np.ndarray, removal: bool=False) -> None:
+        self.ssb += sb
+        self.sst += st
+        self.sd += sd
+        print(f"\nTotal stress so far:")
+        if not removal:
+            print(f"- substrate bottom {self.ssb}\n- substrate interface {self.sst}.")
+        print(f"- deposit interface {self.sd[0]}\n- deposit top {self.sd[-1]}.\n")
 
 
     def deposition(self) -> None:
@@ -264,6 +272,7 @@ class TsuiClaynePlane:
                                            self.substrate.h, self.substrate.E_eff,
                                            self.w, self.deposit.E_eff, self.F, self.delta, self.k_diff)
         print(f"Stress in deposit (edges). Interface: {self.sd_dep[0]:.5f}, Top: {self.sd_dep[-1]:.5f}.")
+        self._update_total_stress(self.ssb_dep, self.sst_dep, self.sd_dep)
 
 
     def cooling(self, delta_T: float | None = None, delta_eps: float | None = None) -> None:
@@ -328,20 +337,7 @@ class TsuiClaynePlane:
                                      self.deposit.h, self.deposit.E_eff,
                                      self.th_F, self.th_delta, self.th_k_diff) * self.th_scale
         print(f"Thermal stress in deposit (edges). Interface: {self.sd_th[0]:.5f}, Top: {self.sd_th[-1]:.5f}.")
-
-
-    def sum_stress_after_cooling(self) -> None:
-        """Combine deposition and thermal stress contributions.
-
-        Calculates the total stress distributions in the substrate and
-        deposit by summing the mechanical and thermal contributions.
-        Updates ``ssb``, ``sst`` and ``sd``.
-        """
-        self.ssb = self.ssb_dep + self.ssb_th
-        self.sst = self.sst_dep + self.sst_th
-        self.sd = self.sd_dep + self.sd_th
-        print(f"Stress in substrate (dep + th). Bottom: {self.ssb}, Interface: {self.sst}.")
-        print(f"Stress in deposit (edges, dep + th). Interface: {self.sd[0]}, Top: {self.sd[-1]}.")
+        self._update_total_stress(self.ssb_th, self.sst_th, self.sd_th)
 
 
     def removal(self, ssb: float | None = None, sst: float | None = None) -> None:
@@ -398,12 +394,13 @@ class TsuiClaynePlane:
         print(f"Residuals: force {self.F_res}, moment: {self.M_res}")
         assert self.F_res < 0.0001 and self.M_res < 0.0001
         print("Passed.")
+        self.done_removal = True
 
         print("Compute stress in deposit.")
-        self.sd_rem = self.sd - self.midpoints * self.slope_red - self.intercept_red
+        # self.sd_rem = self.sd - self.midpoints * self.slope_red - self.intercept_red
+        self.sd_rem = - self.midpoints * self.slope_red - self.intercept_red
         print(f"Stress in deposit after removal (edges): interface {self.sd_rem[0]}, top {self.sd_rem[-1]}")
-
-        self.done_removal = True
+        self._update_total_stress(0., 0., self.sd_rem, True)
 
 
     def export(self, path: str, prefix: str = "") -> None:

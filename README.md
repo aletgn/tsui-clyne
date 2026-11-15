@@ -39,7 +39,7 @@ substrate = Material("Sub", b_sub, H, E_sub, n_sub, alpha_sub)
 deposit = Material("Dep"  , b_dep, h, E_dep, n_dep, alpha_dep)
 # alpha_* is optional. Required for cooling only.
 
-# Cooling and removal depend on individual case.
+# Cooling and removal depend on individual cases.
 tc = TCP(substrate, deposit, quench_stress, w_step, n_layer, "Sub-Dep")
 tc.deposition()
 tc.cooling(delta_eps) # If delta_eps not provided, must choose delta T and alpha.
